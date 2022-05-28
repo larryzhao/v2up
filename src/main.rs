@@ -82,12 +82,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match &cli.command {
         Some(Commands::Servers {}) => {
             let stdout = io::stdout().into_raw_mode()?;
-            let stdout = MouseTerminal::from(stdout);
-            let stdout = AlternateScreen::from(stdout);
+            // let stdout = MouseTerminal::from(stdout);
+            // let stdout = AlternateScreen::from(stdout);
             let backend = TermionBackend::new(stdout);
             let terminal = &mut Terminal::new(backend)?;
 
-            servers::exec(&mut ctx, terminal);
+            let result = servers::exec(&mut ctx, terminal);
+
+            drop(terminal);
+            println!("after");
         }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap()

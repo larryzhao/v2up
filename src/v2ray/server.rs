@@ -3,6 +3,9 @@ use std::str;
 
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
+use crate::v2ray::config::Settings2;
+use crate::v2ray::config::User;
+use crate::v2ray::config::Vnext;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub enum Server {
@@ -35,6 +38,30 @@ struct VmessServerInfo {
     pub host: String,
     pub path: String,
     pub tls: String,
+}
+
+impl Server {
+    pub fn to_outbound(&self) -> Settings2 {
+        match self {
+            Server::Vmess(server) => {
+                return Settings2 {
+                    vnext: vec![Vnext {
+                        address: server.address.clone(),
+                        port: server.port,
+                        users: vec![User {
+                            id: server.user_id.clone(),
+                            alter_id: server.alter_id,
+                            level: 0,
+                            security: String::from("aes-128-gcm"),
+                        }],
+                    }],
+                    domain_strategy: None,
+                    response: None,
+                    user_level: None,
+                }
+            }
+        }
+    }
 }
 
 pub fn from_str(server_url: &str) -> Result<Server, Error> {

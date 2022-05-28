@@ -21,7 +21,20 @@ pub fn exec<B: Backend>(
     terminal: &mut Terminal<B>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut app = App::new(&ctx.settings.subscriptions[0].servers);
-    app.run(terminal)
+    match app.run(terminal) {
+        Ok(opt) => {
+            match opt {
+                Some(idx) => match &ctx.settings.subscriptions[0].servers[idx] {
+                    Server::Vmess(server) => {
+                        println!("selected server: {}, {}", idx, server.name);
+                    }
+                },
+                None => {}
+            }
+            Ok(())
+        }
+        Err(err) => return Err(err),
+    }
 }
 
 struct App<'a> {
@@ -83,24 +96,34 @@ impl<'a> App<'a> {
         f.render_stateful_widget(items, chunks[0], &mut self.servers.state);
     }
 
-    fn on_tick(&self) {}
-
     fn run<B: Backend>(
         &mut self,
         terminal: &mut Terminal<B>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<Option<usize>, Box<dyn std::error::Error>> {
         let events = events(self.tick_rate);
+        let _enter_key = char::from_u32(13).unwrap();
+
         loop {
             terminal.draw(|f| self.draw(f))?;
             match events.recv()? {
                 Event::Input(key) => match key {
-                    Key::Char('q') => return Ok(()),
-                    Key::Left => self.servers.unselect(),
-                    Key::Down => self.servers.next(),
-                    Key::Up => self.servers.previous(),
+                    Key::Char('q') => return Ok(None),
+                    Key::Char(_enter_key) => match self.servers.state.selected() {
+                        Some(idx) => return Ok(Some(idx)),
+                        None => {}
+                    },
+                    Key::Left => {
+                        self.servers.unselect();
+                    }
+                    Key::Down => {
+                        self.servers.next();
+                    }
+                    Key::Up => {
+                        self.servers.previous();
+                    }
                     _ => {}
                 },
-                Event::Tick => self.on_tick(),
+                Event::Tick => {}
             }
         }
     }
