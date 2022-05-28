@@ -2,6 +2,19 @@ extern crate core;
 
 use clap::Parser;
 use clap::Subcommand;
+use std::io;
+
+use tui::{
+    backend::{Backend, TermionBackend},
+    Terminal,
+};
+
+use termion::{
+    event::Key,
+    input::{MouseTerminal, TermRead},
+    raw::IntoRawMode,
+    screen::AlternateScreen,
+};
 
 mod commands;
 use commands::servers;
@@ -36,7 +49,7 @@ struct Cli {
     command: Option<Commands>,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     // load settings
@@ -45,10 +58,10 @@ fn main() {
         println!("err on loading settings: {}", result.err().unwrap().message);
         std::process::exit(-1);
     }
-    let mut settings = result.unwrap();
+    let settings = &mut result.unwrap();
 
     // load v2ray process
-    let mut process = v2ray::process::Process::new();
+    let process = &mut v2ray::process::Process::new();
 
     // new v2ray config
     let result = v2ray::config::Config::load("/Users/larry/.v2up/v2ray.json");
@@ -57,22 +70,31 @@ fn main() {
         std::process::exit(-1)
     }
 
-    let mut config = result.unwrap();
+    let config = &mut result.unwrap();
 
     // create context
     let mut ctx = context::Context {
-        settings: &mut settings,
-        config: &mut config,
-        process: &mut process,
+        settings: settings,
+        config: config,
+        process: process,
     };
 
     match &cli.command {
-        Some(Commands::Servers {}) => servers::exec(&ctx),
+        Some(Commands::Servers {}) => {
+            let stdout = io::stdout().into_raw_mode()?;
+            let stdout = MouseTerminal::from(stdout);
+            let stdout = AlternateScreen::from(stdout);
+            let backend = TermionBackend::new(stdout);
+            let terminal = &mut Terminal::new(backend)?;
+
+            servers::exec(&mut ctx, terminal);
+        }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap()
         }
         None => {}
     }
 
-    println!("verbose: {}", cli.verbose)
+    println!("verbose: {}", cli.verbose);
+    Ok(())
 }

@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
-
 use std::fs;
 
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
+use crate::v2ray::server::*;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct V2Ray {
@@ -16,12 +16,13 @@ pub struct Log {
     pub location: String,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Subscription {
     pub name: String,
     pub url: String,
     pub added_at: chrono::DateTime<chrono::Local>,
     pub last_polled_at: chrono::DateTime<chrono::Local>,
+    pub servers: Vec<Server>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -33,7 +34,6 @@ pub struct Settings {
     pub v2ray: V2Ray,
     pub log: Log,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub subscriptions: Vec<Subscription>,
 }
 
@@ -43,7 +43,27 @@ impl Settings {
         self.save()
     }
 
-    pub fn save(&mut self) -> Result<(), Error> {
+    pub fn update_subscription_servers(
+        &mut self,
+        name: &str,
+        servers: &Vec<Server>,
+    ) -> Result<(), Error> {
+        let subs = &mut self.subscriptions.clone();
+
+        let mut sub_idx: usize = 0;
+
+        for i in 0..self.subscriptions.len() {
+            if self.subscriptions[i].name.as_str().eq(name) {
+                sub_idx = i;
+                break;
+            }
+        }
+
+        self.subscriptions[sub_idx].servers = (*servers).clone();
+        self.save()
+    }
+
+    pub fn save(&self) -> Result<(), Error> {
         let result = serde_yaml::to_string(self);
         if result.is_err() {
             let err_msg = result.err().unwrap();

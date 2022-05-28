@@ -6,4 +6,7 @@ pub enum ErrorKind {
     EncodeYAMLError,
     ParseJSONError,
     CommandNotFoundError,
+    HTTPRequestError,
+    Base64DecodeError,
+    UnknownServerProtocol,
 }

@@ -12,7 +12,8 @@ serde_yaml = "0.8"
 serde_json = "1.0.81"
 sysinfo = "0.23.12"
 chrono = { version = "0.4", features = ["serde"] }
-
-[[bin]]
-name = "v2up"
-src = "src/bin/cli/main.rs"
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+tokio = { version = "1", features = ["full"] }
+base64 = "0.13.0"
+tui = { version = "0.18.0", features = ["termion"] }
+termion = "*"
