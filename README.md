@@ -1,7 +1,21 @@
 v2up servers
-v2up update --subscribe=
+----
+list servers and pick outbound servers
+
 v2up start
+----
+start v2ray core and v2up worker
+
 v2up stop
+----
+stop v2ray core and v2up worker
+
+v2up mode
+----
+switch mode global/pac/manual
+
+
+v2up update --subscribe=
 v2up config
 v2up logs --tail
 v2up upgrade

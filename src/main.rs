@@ -1,24 +1,15 @@
+#[macro_use]
+extern crate rocket;
 extern crate core;
 
 use clap::Parser;
 use clap::Subcommand;
 use std::io;
 
-use tui::{
-    backend::{Backend, TermionBackend},
-    Terminal,
-};
-
-use termion::{
-    event::Key,
-    input::{MouseTerminal, TermRead},
-    raw::IntoRawMode,
-    screen::AlternateScreen,
-};
-
 mod commands;
 use commands::servers;
 use commands::subscriptions;
+use commands::work;
 
 mod errors;
 
@@ -26,6 +17,7 @@ mod v2ray;
 
 mod context;
 mod settings;
+mod server;
 
 use settings::Settings;
 
@@ -33,6 +25,7 @@ use settings::Settings;
 enum Commands {
     /// does testing things
     Servers {},
+    Work {},
     Subscriptions {
         #[clap(subcommand)]
         command: subscriptions::Commands,
@@ -81,16 +74,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match &cli.command {
         Some(Commands::Servers {}) => {
-            let stdout = io::stdout().into_raw_mode()?;
-            // let stdout = MouseTerminal::from(stdout);
-            // let stdout = AlternateScreen::from(stdout);
-            let backend = TermionBackend::new(stdout);
-            let terminal = &mut Terminal::new(backend)?;
-
-            let result = servers::exec(&mut ctx, terminal);
-
-            drop(terminal);
-            println!("after");
+            let result = servers::exec(&mut ctx);
+        }
+        Some(Commands::Work {}) => {
+            work::exec(&mut ctx);
         }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap()

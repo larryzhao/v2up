@@ -8,6 +8,7 @@ use crate::v2ray::config::User;
 use crate::v2ray::config::Vnext;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(crate = "rocket::serde")]
 pub enum Server {
     Vmess(VmessServer),
 }

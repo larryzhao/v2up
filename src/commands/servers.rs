@@ -1,203 +1,33 @@
 use crate::context::Context;
 use crate::v2ray::server::Server;
+use crate::errors::Error;
+
 use std::{io, sync::mpsc, thread, time::Duration};
-use termion::{
-    event::Key,
-    input::{MouseTerminal, TermRead},
-    raw::IntoRawMode,
-    screen::AlternateScreen,
-};
-use tui::{
-    backend::{Backend, TermionBackend},
-    layout::{Constraint, Corner, Direction, Layout},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, ListState},
-    Frame, Terminal,
-};
+use dialoguer::{theme::ColorfulTheme, Select};
 
-pub fn exec<B: Backend>(
-    ctx: &mut Context,
-    terminal: &mut Terminal<B>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut app = App::new(&ctx.settings.subscriptions[0].servers);
-    match app.run(terminal) {
-        Ok(opt) => {
-            match opt {
-                Some(idx) => match &ctx.settings.subscriptions[0].servers[idx] {
-                    Server::Vmess(server) => {
-                        println!("selected server: {}, {}", idx, server.name);
-                    }
-                },
-                None => {}
-            }
-            Ok(())
-        }
-        Err(err) => return Err(err),
-    }
-}
-
-struct App<'a> {
-    servers: StatefulList<&'a str>,
-    tick_rate: Duration,
-}
-
-impl<'a> App<'a> {
-    fn new(servers: &'a Vec<Server>) -> Self {
-        let mut items = vec![];
-        for server in servers {
-            match server {
-                Server::Vmess(server) => items.push(server.name.as_str()),
-            }
-        }
-
-        return App {
-            servers: StatefulList::with_items(items),
-            tick_rate: Duration::from_millis(250),
-        };
-    }
-    fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
-        // Create two chunks with equal horizontal screen space
-        let chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(80)].as_ref())
-            .split(f.size());
-
-        // Iterate through all elements in the `items` app and append some debug text to it.
-        let items: Vec<ListItem> = self
-            .servers
-            .items
-            .iter()
-            .map(|server| {
-                let mut lines = vec![Spans::from(*server)];
-                //         lines.push(Spans::from(Span::styled(
-                // "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                // Style::default().add_modifier(Modifier::ITALIC),
-                // let mut lines = vec![Spans::from(i.0)];
-                // for _ in 0..i.1 {
-
-                //     )));
-                // }
-                ListItem::new(lines).style(Style::default().fg(Color::Cyan))
-            })
-            .collect();
-
-        // Create a List from all list items and highlight the currently selected one
-        let items = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("List"))
-            .highlight_style(
-                Style::default()
-                    .bg(Color::LightYellow)
-                    .add_modifier(Modifier::BOLD),
-            )
-            .highlight_symbol(">> ");
-
-        // We can now render the item list
-        f.render_stateful_widget(items, chunks[0], &mut self.servers.state);
-    }
-
-    fn run<B: Backend>(
-        &mut self,
-        terminal: &mut Terminal<B>,
-    ) -> Result<Option<usize>, Box<dyn std::error::Error>> {
-        let events = events(self.tick_rate);
-        let _enter_key = char::from_u32(13).unwrap();
-
-        loop {
-            terminal.draw(|f| self.draw(f))?;
-            match events.recv()? {
-                Event::Input(key) => match key {
-                    Key::Char('q') => return Ok(None),
-                    Key::Char(_enter_key) => match self.servers.state.selected() {
-                        Some(idx) => return Ok(Some(idx)),
-                        None => {}
-                    },
-                    Key::Left => {
-                        self.servers.unselect();
-                    }
-                    Key::Down => {
-                        self.servers.next();
-                    }
-                    Key::Up => {
-                        self.servers.previous();
-                    }
-                    _ => {}
-                },
-                Event::Tick => {}
-            }
-        }
-    }
-}
-
-struct StatefulList<T> {
-    state: ListState,
-    items: Vec<T>,
-}
-
-impl<T> StatefulList<T> {
-    fn with_items(items: Vec<T>) -> StatefulList<T> {
-        StatefulList {
-            state: ListState::default(),
-            items,
+pub fn exec(ctx: &mut Context) -> Result<(), Error> {
+    let mut selections : Vec<&str> = vec![];
+    
+    for server in &ctx.settings.subscriptions[0].servers {
+        match server {
+            Server::Vmess(server) => selections.push(server.name.as_str())
         }
     }
 
-    fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Pick a server").default(0).items(&selections[..]).interact().unwrap(); 
+
+    let server = &ctx.settings.subscriptions[0].servers[selection];
+    let result = ctx.config.use_server(server);
+    if result.is_err() {
+
     }
 
-    fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    fn unselect(&mut self) {
-        self.state.select(None);
-    }
-}
-
-enum Event {
-    Input(Key),
-    Tick,
-}
-
-fn events(tick_rate: Duration) -> mpsc::Receiver<Event> {
-    let (tx, rx) = mpsc::channel();
-    let keys_tx = tx.clone();
-    thread::spawn(move || {
-        let stdin = io::stdin();
-        for key in stdin.keys().flatten() {
-            if let Err(err) = keys_tx.send(Event::Input(key)) {
-                eprintln!("{}", err);
-                return;
-            }
+    match server {
+        Server::Vmess(server) => {
+            println!("use server: {}, {}", server.name, server.address);
         }
-    });
-    thread::spawn(move || loop {
-        if let Err(err) = tx.send(Event::Tick) {
-            eprintln!("{}", err);
-            break;
-        }
-        thread::sleep(tick_rate);
-    });
-    rx
+    }
+
+    return Ok(())
 }

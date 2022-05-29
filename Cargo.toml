@@ -15,5 +15,7 @@ chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.11", features = ["json", "blocking"] }
 tokio = { version = "1", features = ["full"] }
 base64 = "0.13.0"
-tui = { version = "0.18.0", features = ["termion"] }
-termion = "*"
+dialoguer = "0.10.1"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+# rocket_contrib = { version = "0.5.0-rc.2", default-features = false, features = ["json"] }
+
