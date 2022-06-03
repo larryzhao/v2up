@@ -1,6 +1,14 @@
+use crate::utils::pid_file::write_pidfile;
+use crate::errors::kind::ErrorKind;
+use crate::errors::Error;
+
 use std::fs;
 use std::path::PathBuf;
 use sysinfo::SystemExt;
+use std::process::Command;
+
+use nix::sys::signal::{Signal};
+use nix::unistd::Pid;
 
 enum ProcessState {
     /// Thread is running normally.
@@ -51,9 +59,26 @@ impl Process {
         return Process { pid, state };
     }
 
-    // pub fn start(this: &Self) -> Result(_, Error) {
-    // }
-    //
-    // pub fn stop(this: &Self) -> Result(_, Error) {
-    // }
+    pub fn start(&mut self) -> Result<(), Error> {
+        let mut command = Command::new("/usr/local/bin/v2ray");
+        command.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
+
+        if let Ok(child) = command.spawn() {
+            let pid = child.id();
+            write_pidfile("/Users/larry/.v2up/v2ray.pid", pid.to_string().as_str());
+        }
+
+        Ok(())
+    }
+
+    pub fn restart(&mut self) -> Result<(), Error> {
+        self.stop();
+        self.start();
+        Ok(())
+    }
+
+    pub fn stop(&mut self) -> Result<(), Error> {
+        nix::sys::signal::kill(Pid::from_raw(self.pid), Signal::SIGTERM).unwrap(); 
+        Ok(())
+    }
 }

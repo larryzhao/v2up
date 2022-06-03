@@ -9,4 +9,5 @@ pub enum ErrorKind {
     HTTPRequestError,
     Base64DecodeError,
     UnknownServerProtocol,
+    GetCurrentProcessIDError,
 }

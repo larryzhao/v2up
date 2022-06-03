@@ -23,6 +23,7 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
 
     }
 
+    ctx.process.restart();
     match server {
         Server::Vmess(server) => {
             println!("use server: {}, {}", server.name, server.address);

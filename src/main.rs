@@ -10,7 +10,9 @@ mod commands;
 use commands::servers;
 use commands::subscriptions;
 use commands::work;
+use commands::start;
 
+mod utils;
 mod errors;
 
 mod v2ray;
@@ -26,6 +28,8 @@ enum Commands {
     /// does testing things
     Servers {},
     Work {},
+    Start {},
+    Stop {},
     Subscriptions {
         #[clap(subcommand)]
         command: subscriptions::Commands,
@@ -78,6 +82,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(Commands::Work {}) => {
             work::exec(&mut ctx);
+        }
+        Some(Commands::Start {}) => {
+            start::exec(&mut ctx);
+        },
+        Some(Commands::Stop {}) => {
+            // stop v2ray
+            // stop v2up worker
         }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap()
