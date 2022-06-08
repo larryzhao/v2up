@@ -5,6 +5,7 @@ extern crate core;
 use clap::Parser;
 use clap::Subcommand;
 use std::io;
+use std::process::Command;
 
 mod commands;
 use commands::servers;
@@ -89,6 +90,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Stop {}) => {
             // stop v2ray
             // stop v2up worker
+            // remove pac
+            Command::new("networksetup").args(["-setautoproxystate", "Wi-Fi", "off"]).output()
+                    .expect("failed to disable pac");
         }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap()

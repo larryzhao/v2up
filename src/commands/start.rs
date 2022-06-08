@@ -25,5 +25,11 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
             .expect("failed to execute process");
     }
 
+    // set pac
+    Command::new("networksetup")
+        .args(["-setautoproxyurl", "Wi-Fi", "http://127.0.0.1:8000/pac/proxy.js"])
+        .output()
+        .expect("failed to enable pac");
+
     Ok(())
 }
