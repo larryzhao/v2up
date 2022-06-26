@@ -7,8 +7,7 @@ use crate::v2ray::server::*;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct V2Ray {
-    pub path: String,
-    pub version: String,
+    pub bin: String,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -76,6 +75,13 @@ impl Settings {
         let content = result.unwrap();
         fs::write(self.filepath.as_str(), content);
         Ok(())
+    }
+
+    pub fn v2ray_binary(&self) -> &str {
+        if self.v2ray.bin.is_empty() {
+            return "/usr/local/bin/v2up";
+        }
+        return self.v2ray.bin.as_str()
     }
 
     pub fn load(filepath: &str) -> Result<Settings, Error> {

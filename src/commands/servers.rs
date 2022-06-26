@@ -23,7 +23,7 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
 
     }
 
-    ctx.process.restart();
+    ctx.process.restart(ctx.settings.v2ray_binary());
     match server {
         Server::Vmess(server) => {
             println!("use server: {}, {}", server.name, server.address);

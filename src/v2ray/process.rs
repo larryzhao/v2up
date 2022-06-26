@@ -59,8 +59,8 @@ impl Process {
         return Process { pid, state };
     }
 
-    pub fn start(&mut self) -> Result<(), Error> {
-        let mut command = Command::new("/usr/local/bin/v2ray");
+    pub fn start(&mut self, v2ray_binary: &str) -> Result<(), Error> {
+        let mut command = Command::new(v2ray_binary);
         command.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
 
         if let Ok(child) = command.spawn() {
@@ -71,9 +71,9 @@ impl Process {
         Ok(())
     }
 
-    pub fn restart(&mut self) -> Result<(), Error> {
+    pub fn restart(&mut self, v2ray_binary: &str) -> Result<(), Error> {
         self.stop();
-        self.start();
+        self.start(v2ray_binary);
         Ok(())
     }
 

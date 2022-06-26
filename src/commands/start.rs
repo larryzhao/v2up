@@ -7,7 +7,7 @@ use std::process::Command;
 
 pub fn exec(ctx: &mut Context) -> Result<(), Error> {
     // start v2ray core
-    let result = ctx.process.start();
+    let result = ctx.process.start(ctx.settings.v2ray_binary());
     if result.is_err() {
         let err = result.unwrap_err();
         return Err(Error {
