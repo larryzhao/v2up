@@ -9,6 +9,7 @@ use std::process::Command;
 
 use nix::sys::signal::{Signal};
 use nix::unistd::Pid;
+use nix::errno::Errno::*;
 
 enum ProcessState {
     /// Thread is running normally.
@@ -78,7 +79,17 @@ impl Process {
     }
 
     pub fn stop(&mut self) -> Result<(), Error> {
-        nix::sys::signal::kill(Pid::from_raw(self.pid), Signal::SIGTERM).unwrap(); 
-        Ok(())
+        let result = nix::sys::signal::kill(Pid::from_raw(self.pid), Signal::SIGTERM); 
+        match result {
+            Ok(_) => Ok(()),
+            Err(err) => match err {
+                ESRCH => {
+                    Ok(())
+                }
+                _ => {
+                    panic!("stop v2ray process with err: {}", err)
+                }
+            }
+        }
     }
 }

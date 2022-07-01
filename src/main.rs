@@ -89,6 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         Some(Commands::Stop {}) => {
             // stop v2ray
+            ctx.process.stop();
             // stop v2up worker
             // remove pac
             Command::new("networksetup").args(["-setautoproxystate", "Wi-Fi", "off"]).output()
