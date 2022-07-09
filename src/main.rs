@@ -1,10 +1,10 @@
 #[macro_use]
+extern crate termion;
 extern crate rocket;
 extern crate core;
 
 use clap::Parser;
 use clap::Subcommand;
-use std::io;
 use std::process::Command;
 
 mod commands;
@@ -12,6 +12,7 @@ use commands::servers;
 use commands::subscriptions;
 use commands::work;
 use commands::start;
+use commands::status;
 
 mod utils;
 mod errors;
@@ -28,6 +29,7 @@ use settings::Settings;
 enum Commands {
     /// does testing things
     Servers {},
+    Status {},
     Work {},
     Start {},
     Stop {},
@@ -81,6 +83,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Servers {}) => {
             let result = servers::exec(&mut ctx);
         }
+        Some(Commands::Status {}) => {
+            status::exec(&ctx);
+        },
         Some(Commands::Work {}) => {
             work::exec(&mut ctx);
         }
