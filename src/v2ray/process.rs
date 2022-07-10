@@ -11,19 +11,12 @@ use nix::sys::signal::{Signal};
 use nix::unistd::Pid;
 use nix::errno::Errno::*;
 
-enum ProcessState {
-    /// Thread is running normally.
+#[derive(Clone, Copy)]
+pub enum ProcessState {
+    // Thread is running normally.
     Running,
-    /// Thread is stopped.
+    // Stopped.
     Stopped,
-    /// Thread is waiting normally.
-    Waiting,
-    /// Thread is in an uninterruptible wait
-    Uninterruptible,
-    /// Thread is halted at a clean point.
-    Halted,
-    /// Unknown.
-    Unknown(i32),
 }
 
 pub struct Process {
@@ -53,7 +46,7 @@ impl Process {
                     state = ProcessState::Running;
                 }
                 None => {
-                    // warn
+                    // unknown
                 }
             }
         }
@@ -91,5 +84,13 @@ impl Process {
                 }
             }
         }
+    }
+
+    pub fn state(&self) -> ProcessState {
+        return self.state
+    }
+
+    pub fn pid(&self) -> i32 {
+        return self.pid
     }
 }

@@ -105,7 +105,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         None => {}
     }
-
-    println!("verbose: {}", cli.verbose);
     Ok(())
 }
