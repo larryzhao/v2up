@@ -1,5 +1,4 @@
 use crate::utils::pid_file::write_pidfile;
-use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 
 use std::fs;

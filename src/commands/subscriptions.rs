@@ -24,10 +24,6 @@ pub fn exec(ctx: &mut Context, commands: &Commands) -> Result<(), Error> {
         Commands::Add { name, url } => add(ctx, name.as_str(), url.as_str()),
         Commands::Remove { name } => remove(ctx, name.as_str()),
         Commands::Update {} => update(ctx),
-        _ => Err(errors::Error {
-            kind: errors::kind::ErrorKind::CommandNotFoundError,
-            message: format!("command not found"),
-        }),
     };
 }
 
@@ -64,10 +60,18 @@ fn fetch(url: &str) -> Result<Vec<Server>, Error> {
     let result = reqwest::blocking::get(url);
     if result.is_err() {
         return match result.err() {
-            Some(err) => Err(Error {
-                kind: errors::kind::ErrorKind::HTTPRequestError,
-                message: format!("get {} err: {}", url, err),
-            }),
+            Some(err) => {
+                eprintln!("{}", err);
+                return Err(Error {
+                    kind: errors::kind::ErrorKind::HTTPRequestError,
+                    message: format!("get {} with unknown err", url),
+                });
+            },
+            
+            // Err(Error {
+                // kind: errors::kind::ErrorKind::HTTPRequestError,
+                // message: format!("got HTTPRequestError: {}", err),
+            // }),
             None => Err(Error {
                 kind: errors::kind::ErrorKind::HTTPRequestError,
                 message: format!("get {} with unknown err", url),

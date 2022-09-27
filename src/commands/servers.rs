@@ -1,8 +1,8 @@
 use crate::context::Context;
 use crate::v2ray::server::Server;
 use crate::errors::Error;
+use crate::errors::kind::ErrorKind;
 
-use std::{io, sync::mpsc, thread, time::Duration};
 use dialoguer::{theme::ColorfulTheme, Select};
 
 pub fn exec(ctx: &mut Context) -> Result<(), Error> {
@@ -23,7 +23,14 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
 
     }
 
-    ctx.process.restart(ctx.settings.v2ray_binary());
+    let result = ctx.process.restart(ctx.settings.v2ray_binary());
+    if result.is_err() {
+        return Err(Error{
+            kind: ErrorKind::ExecuteCommandError,
+            message: format!("restart v2ray err: {}", result.err().unwrap())
+        });
+    }
+
     match server {
         Server::Vmess(server) => {
             println!("use server: {}, {}", server.name, server.address);

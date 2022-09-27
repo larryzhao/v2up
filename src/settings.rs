@@ -47,8 +47,6 @@ impl Settings {
         name: &str,
         servers: &Vec<Server>,
     ) -> Result<(), Error> {
-        let subs = &mut self.subscriptions.clone();
-
         let mut sub_idx: usize = 0;
 
         for i in 0..self.subscriptions.len() {

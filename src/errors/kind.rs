@@ -10,4 +10,5 @@ pub enum ErrorKind {
     Base64DecodeError,
     UnknownServerProtocol,
     GetCurrentProcessIDError,
+    ExecuteCommandError,
 }
