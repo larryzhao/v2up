@@ -6,10 +6,15 @@ use crate::errors::Error;
 use crate::settings::Subscription;
 use crate::v2ray;
 use crate::v2ray::server::*;
+use std::time::Duration;
 
 use clap::Subcommand;
 use std::str;
 use std::time::SystemTime;
+
+use reqwest::blocking::Client;
+use reqwest::blocking::ClientBuilder;
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 
 #[derive(Subcommand)]
 pub enum Commands {
@@ -57,7 +62,14 @@ pub fn update(ctx: &mut Context) -> Result<(), Error> {
 }
 
 fn fetch(url: &str) -> Result<Vec<Server>, Error> {
-    let result = reqwest::blocking::get(url);
+    let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
+    let client = ClientBuilder::new()
+        .no_proxy()
+        .timeout(Duration::new(30, 0))
+        .build()
+        .unwrap();
+
+    let result = client.get(url).send();
     if result.is_err() {
         return match result.err() {
             Some(err) => {
@@ -66,11 +78,11 @@ fn fetch(url: &str) -> Result<Vec<Server>, Error> {
                     kind: errors::kind::ErrorKind::HTTPRequestError,
                     message: format!("get {} with unknown err", url),
                 });
-            },
-            
+            }
+
             // Err(Error {
-                // kind: errors::kind::ErrorKind::HTTPRequestError,
-                // message: format!("got HTTPRequestError: {}", err),
+            // kind: errors::kind::ErrorKind::HTTPRequestError,
+            // message: format!("got HTTPRequestError: {}", err),
             // }),
             None => Err(Error {
                 kind: errors::kind::ErrorKind::HTTPRequestError,

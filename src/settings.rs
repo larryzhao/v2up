@@ -4,6 +4,7 @@ use std::fs;
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 use crate::v2ray::server::*;
+use std::time::SystemTime;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct V2Ray {
@@ -56,6 +57,7 @@ impl Settings {
             }
         }
 
+        self.subscriptions[sub_idx].last_polled_at = chrono::DateTime::from(SystemTime::now());
         self.subscriptions[sub_idx].servers = (*servers).clone();
         self.save()
     }
@@ -79,7 +81,7 @@ impl Settings {
         if self.v2ray.bin.is_empty() {
             return "/usr/local/bin/v2up";
         }
-        return self.v2ray.bin.as_str()
+        return self.v2ray.bin.as_str();
     }
 
     pub fn load(filepath: &str) -> Result<Settings, Error> {
