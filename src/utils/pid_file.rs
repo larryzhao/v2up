@@ -1,5 +1,3 @@
-use crate::errors::Error;
-use std::path::Path;
 use std::fs;
 
 pub fn read_pidfile(path: &str) -> i32 {

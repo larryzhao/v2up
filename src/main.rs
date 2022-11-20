@@ -1,27 +1,28 @@
 #[macro_use]
 extern crate termion;
-extern crate rocket;
 extern crate core;
+extern crate rocket;
 
 use clap::Parser;
 use clap::Subcommand;
 use std::process::Command;
+use std::thread;
 
 mod commands;
 use commands::servers;
-use commands::subscriptions;
-use commands::work;
 use commands::start;
 use commands::status;
+use commands::subscriptions;
+use commands::work;
 
-mod utils;
 mod errors;
+mod utils;
 
 mod v2ray;
 
 mod context;
-mod settings;
 mod server;
+mod settings;
 
 use settings::Settings;
 
@@ -60,8 +61,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let settings = &mut result.unwrap();
 
-    // load v2ray process
-    let process = &mut v2ray::process::Process::new();
+    // create v2ray process
+    let cmd = &mut Command::new(settings.v2ray.bin.as_str());
+    cmd.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
+    let process = &mut utils::process::Process::new(cmd, "/Users/larry/.v2up/v2ray.pid");
 
     // new v2ray config
     let result = v2ray::config::Config::load("/Users/larry/.v2up/v2ray.json");
@@ -85,20 +88,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(Commands::Status {}) => {
             status::exec(&ctx);
-        },
+        }
         Some(Commands::Work {}) => {
             work::exec(&mut ctx);
         }
         Some(Commands::Start {}) => {
             start::exec(&mut ctx);
-        },
+        }
         Some(Commands::Stop {}) => {
             // stop v2ray
             ctx.process.stop();
             // stop v2up worker
             // remove pac
-            Command::new("networksetup").args(["-setautoproxystate", "Wi-Fi", "off"]).output()
-                    .expect("failed to disable pac");
+            Command::new("networksetup")
+                .args(["-setautoproxystate", "Wi-Fi", "off"])
+                .output()
+                .expect("failed to disable pac");
         }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap()

@@ -21,4 +21,6 @@ dialoguer = "0.10.1"
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 fork = "0.1"
 nix = "0.24.1"
+signal-hook = "0.3.14"
+libc = "0.2.137"
 termion = "*"
