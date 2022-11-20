@@ -127,6 +127,10 @@ fn fetch(url: &str) -> Result<Vec<Server>, Error> {
 
     let server_entries = servers_data.split("\r\n");
     for entry in server_entries {
+        if entry.trim().is_empty() {
+            continue;
+        }
+
         match v2ray::server::from_str(entry) {
             Ok(server) => servers.push(server),
             Err(err) => {
