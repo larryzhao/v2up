@@ -12,9 +12,7 @@ use clap::Subcommand;
 use std::str;
 use std::time::SystemTime;
 
-use reqwest::blocking::Client;
 use reqwest::blocking::ClientBuilder;
-use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 
 #[derive(Subcommand)]
 pub enum Commands {
@@ -62,7 +60,6 @@ pub fn update(ctx: &mut Context) -> Result<(), Error> {
 }
 
 fn fetch(url: &str) -> Result<Vec<Server>, Error> {
-    let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
     let client = ClientBuilder::new()
         .no_proxy()
         .timeout(Duration::new(30, 0))
@@ -79,11 +76,6 @@ fn fetch(url: &str) -> Result<Vec<Server>, Error> {
                     message: format!("get {} with unknown err", url),
                 });
             }
-
-            // Err(Error {
-            // kind: errors::kind::ErrorKind::HTTPRequestError,
-            // message: format!("got HTTPRequestError: {}", err),
-            // }),
             None => Err(Error {
                 kind: errors::kind::ErrorKind::HTTPRequestError,
                 message: format!("get {} with unknown err", url),

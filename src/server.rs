@@ -1,14 +1,5 @@
-use crate::context::Context;
-use std::path::Path;
-use std::thread;
-
 use rocket::fs::NamedFile;
-use rocket::{get, routes, State};
-
-// #[get("/world")]
-// fn world() -> &'static str {
-//     "Hello, world!"
-// }
+use rocket::{get, routes};
 
 #[get("/proxy.js")]
 async fn proxy() -> Option<NamedFile> {
@@ -18,6 +9,9 @@ async fn proxy() -> Option<NamedFile> {
 
 #[rocket::main]
 pub async fn run() -> Result<(), rocket::Error> {
-    let _rocket = rocket::build().mount("/pac", routes![proxy]).launch().await?;
+    let _rocket = rocket::build()
+        .mount("/pac", routes![proxy])
+        .launch()
+        .await?;
     Ok(())
 }
