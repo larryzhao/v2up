@@ -1,12 +1,10 @@
-#[macro_use]
-extern crate termion;
 extern crate core;
 extern crate rocket;
+extern crate termion;
 
 use clap::Parser;
 use clap::Subcommand;
 use std::process::Command;
-use std::thread;
 
 mod commands;
 use commands::servers;

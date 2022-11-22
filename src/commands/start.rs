@@ -3,7 +3,6 @@ use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 use crate::utils::process::Process;
 
-use fork::{daemon, Fork};
 use std::process::Command;
 
 pub fn exec(ctx: &mut Context) -> Result<(), Error> {
