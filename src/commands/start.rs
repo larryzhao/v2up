@@ -7,7 +7,7 @@ use std::process::Command;
 
 pub fn exec(ctx: &mut Context) -> Result<(), Error> {
     // start v2ray core
-    let result = ctx.process.start();
+    let result = ctx.v2ray_process.start();
     if result.is_err() {
         let err = result.unwrap_err();
         return Err(Error {
@@ -17,14 +17,14 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
     }
 
     // start worker
-    let cmd = &mut Command::new("v2up");
-    cmd.args(["work"]);
-    let mut worker_process = Process::new(cmd, "/Users/larry/.v2up/worker.pid");
-
-    match worker_process.start() {
-        Ok(_) => {}
-        Err(err) => return Err(err),
-    };
+    let result = ctx.worker_process.start();
+    if result.is_err() {
+        let err = result.unwrap_err();
+        return Err(Error {
+            kind: ErrorKind::Base64DecodeError,
+            message: format!("start v2up worker err: {}", err),
+        });
+    }
 
     // set pac
     Command::new("networksetup")

@@ -5,7 +5,7 @@ use crate::utils::process::ProcessState;
 use termion::{color, style};
 
 pub fn exec(ctx: &Context) -> Result<(), Error> {
-    match ctx.process.state() {
+    match ctx.v2ray_process.state() {
         ProcessState::Running => {
             println!("Status: {}Running{}", color::Fg(color::Green), style::Reset);
         }
@@ -13,7 +13,7 @@ pub fn exec(ctx: &Context) -> Result<(), Error> {
             println!("Status: {}Stopped{}", color::Fg(color::Red), style::Reset);
         }
     }
-    println!("PID: {}", ctx.process.pid());
+    println!("PID: {}", ctx.v2ray_process.pid());
     println!(
         "Server: {}",
         ctx.config.outbounds[0].settings.vnext[0].address
