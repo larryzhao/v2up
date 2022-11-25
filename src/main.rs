@@ -60,9 +60,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = &mut result.unwrap();
 
     // create v2ray process
-    let cmd = &mut Command::new(settings.v2ray.bin.as_str());
-    cmd.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
-    let process = &mut utils::process::Process::new(cmd, "/Users/larry/.v2up/v2ray.pid");
+    let v2ray_cmd = &mut Command::new(settings.v2ray.bin.as_str());
+    v2ray_cmd.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
+    let v2ray_process =
+        &mut utils::process::Process::new(v2ray_cmd, "/Users/larry/.v2up/v2ray.pid");
+
+    // create v2ray process
+    let worker_cmd = &mut Command::new("v2up");
+    worker_cmd.args(["work"]);
+    let worker_process =
+        &mut utils::process::Process::new(worker_cmd, "/Users/larry/.v2up/worker.pid");
 
     // new v2ray config
     let result = v2ray::config::Config::load("/Users/larry/.v2up/v2ray.json");
@@ -77,7 +84,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut ctx = context::Context {
         settings: settings,
         config: config,
-        process: process,
+        v2ray_process: v2ray_process,
+        worker_process: worker_process,
     };
 
     match &cli.command {
@@ -95,8 +103,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(Commands::Stop {}) => {
             // stop v2ray
-            ctx.process.stop();
+            ctx.v2ray_process.stop();
             // stop v2up worker
+            ctx.worker_process.stop();
             // remove pac
             Command::new("networksetup")
                 .args(["-setautoproxystate", "Wi-Fi", "off"])
