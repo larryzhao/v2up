@@ -11,12 +11,12 @@ pub struct Error {
 impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "impl Display")
+        write!(f, "{}", self.message)
     }
 }
 
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "impl Debug")
+        write!(f, "kind: {}, message: {}", self.kind, self.message)
     }
 }
