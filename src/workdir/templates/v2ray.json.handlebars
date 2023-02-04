@@ -1,0 +1,101 @@
+{
+  "dns": {},
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": "6153",
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "timeout": null,
+        "udp": false
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": "6152",
+      "protocol": "http",
+      "settings": {
+        "auth": null,
+        "timeout": 360,
+        "udp": null
+      }
+    }
+  ],
+  "log": {
+    "access": "{{ v2ray_access_log }}",
+    "error": "{{ v2ray_error_log }}",
+    "loglevel": "info"
+  },
+  "outbounds": [
+    {
+      "mux": {
+        "concurrency": 8,
+        "enabled": false
+      },
+      "protocol": "vmess",
+      "settings": {
+        "domainStrategy": null,
+        "response": null,
+        "userLevel": null,
+        "vnext": [
+          {
+            "address": "example.v2ray.org",
+            "port": 10000,
+            "users": [
+              {
+                "alterId": 0,
+                "id": "00000000-0000-0000-0000-000000000000",
+                "level": 0,
+                "security": "aes-128-gcm"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "none",
+        "tcpSettings": {
+          "header": {
+            "type": "none"
+          }
+        }
+      },
+      "tag": "proxy"
+    },
+    {
+      "mux": null,
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIP",
+        "response": null,
+        "userLevel": 0,
+        "vnext": []
+      },
+      "streamSettings": null,
+      "tag": "direct"
+    },
+    {
+      "mux": null,
+      "protocol": "blackhole",
+      "settings": {
+        "domainStrategy": null,
+        "response": {
+          "type": "none"
+        },
+        "userLevel": null,
+        "vnext": []
+      },
+      "streamSettings": null,
+      "tag": "block"
+    }
+  ],
+  "routing": {
+    "settings": {
+      "domainStrategy": "AsIs",
+      "rules": []
+    }
+  },
+  "transport": {}
+}
