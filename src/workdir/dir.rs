@@ -116,15 +116,34 @@ impl Dir {
                     }
 
                     // create default files
-                    let filenames: [&str; 3] = ["settings.yaml", "v2ray.json", "pac.js"];
-                    for name in filenames {
-                        let filepath = self.dir.join(name);
+                    let template_generations: [(&str, &serde_json::Value); 3] = [
+                        (
+                            "settings.yaml",
+                            &json!({
+                                "v2up_log": self.dir.join("v2up.log").to_str().unwrap()
+                            }),
+                        ),
+                        (
+                            "v2ray.json",
+                            &json!({
+                                "v2ray_access_log": self.dir.join("v2ray.access.log").to_str().unwrap(),
+                                "v2ray_error_log": self.dir.join("v2ray.error.log").to_str().unwrap()
+                            }),
+                        ),
+                        ("pac.js", &json!({})),
+                    ];
+
+                    for tup in template_generations {
+                        let name = tup.0;
+                        let data = tup.1;
+
+                        let dest_file = self.dir.join(name);
                         let template_name = format!("{}.handlebars", name);
 
                         match file::create_file_with_template(
-                            filepath.to_str().unwrap(),
+                            dest_file.to_str().unwrap(),
                             template_name.as_str(),
-                            &json!({}),
+                            data,
                         ) {
                             Err(err) => {
                                 // print create file error
