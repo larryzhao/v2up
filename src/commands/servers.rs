@@ -29,7 +29,8 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
     let result = ctx.config.use_server(&server.server);
     if result.is_err() {}
 
-    let result = ctx.process.restart(ctx.settings.v2ray_binary());
+    let result = ctx.v2ray_process.restart(ctx.settings.v2ray_binary());
+
     if result.is_err() {
         return Err(Error {
             kind: ErrorKind::ExecuteCommandError,

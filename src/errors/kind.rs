@@ -2,20 +2,13 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum ErrorKind {
-    FileNotFound,
     LoadSettingsError,
-    WorkdirUnavailable,
     WorkdirUninitialized,
-    DirNotFound,
-    DirEmpty,
-    DirAlreadyTaken,
     CreateFileError,
     ReadFileError,
     WriteFileError,
-    ParseYAMLError,
     EncodeYAMLError,
     ParseJSONError,
-    CommandNotFoundError,
     HTTPRequestError,
     Base64DecodeError,
     UnknownServerProtocol,

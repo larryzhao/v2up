@@ -37,6 +37,8 @@ pub struct Settings {
     pub v2ray: V2Ray,
     pub log: Log,
 
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub subscriptions: Vec<Subscription>,
 }
 
