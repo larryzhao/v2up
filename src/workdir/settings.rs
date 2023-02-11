@@ -1,10 +1,14 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::{fs, path};
 
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 use crate::v2ray::server::*;
+use std::fs::File;
+use std::path::PathBuf;
 use std::time::SystemTime;
+
+use super::dir::Dir;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct V2Ray {
@@ -22,7 +26,6 @@ pub struct Subscription {
     pub url: String,
     pub added_at: chrono::DateTime<chrono::Local>,
     pub last_polled_at: chrono::DateTime<chrono::Local>,
-    pub servers: Vec<Server>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -34,8 +37,6 @@ pub struct Settings {
     pub v2ray: V2Ray,
     pub log: Log,
 
-    #[serde(skip_serializing)]
-    #[serde(skip_deserializing)]
     pub subscriptions: Vec<Subscription>,
 }
 
@@ -48,7 +49,7 @@ impl Settings {
     pub fn update_subscription_servers(
         &mut self,
         name: &str,
-        servers: &Vec<Server>,
+        servers: &Vec<ServerType>,
     ) -> Result<(), Error> {
         let mut sub_idx: usize = 0;
 
@@ -60,7 +61,7 @@ impl Settings {
         }
 
         self.subscriptions[sub_idx].last_polled_at = chrono::DateTime::from(SystemTime::now());
-        self.subscriptions[sub_idx].servers = (*servers).clone();
+        // self.subscriptions[sub_idx].servers = (*servers).clone();
         self.save()
     }
 
@@ -86,31 +87,44 @@ impl Settings {
         return self.v2ray.bin.as_str();
     }
 
-    pub fn load(filepath: &str) -> Result<Settings, Error> {
-        let r = fs::read_to_string(filepath);
-        if r.is_err() {
-            return Err(Error {
-                kind: ErrorKind::ReadFileError,
-                message: format!(
-                    "err on reading settings file {}, {}",
-                    filepath.clone(),
-                    "hello"
-                ),
-            });
-        }
+    pub fn load(workdir: &Dir) -> Result<Settings, Error> {
+        // read and deserialize settings.yaml
+        let settings_file = File::open(workdir.filepath("settings.yaml").as_str()).unwrap();
+        let settings: Settings = match serde_yaml::from_reader(&settings_file) {
+            Ok(settings) => settings,
+            Err(err) => {
+                return Err(Error {
+                    kind: ErrorKind::LoadSettingsError,
+                    message: format!("load settings.yaml err: {}", err),
+                });
+            }
+        };
 
-        let content = r.unwrap();
-
-        let r = serde_yaml::from_str(&content);
-        if r.is_err() {
-            return Err(Error {
-                kind: ErrorKind::ParseYAMLError,
-                message: format!("parse yaml err: {}", r.err().unwrap()),
-            });
-        }
-
-        let mut settings: Settings = r.unwrap();
-        settings.filepath = String::from(filepath);
         return Ok(settings);
+
+        // let r = fs::read_to_string(&settings_path);
+        // if r.is_err() {
+        //     return Err(Error {
+        //         kind: ErrorKind::ReadFileError,
+        //         message: format!(
+        //             "err on reading settings file {}, {}",
+        //             settings_path.to_str().unwrap(),
+        //             r.err().unwrap()
+        //         ),
+        //     });
+        // }
+
+        // let content = r.unwrap();
+        // let r = serde_yaml::from_str(&content);
+        // if r.is_err() {
+        //     return Err(Error {
+        //         kind: ErrorKind::ParseYAMLError,
+        //         message: format!("parse yaml err: {}", r.err().unwrap()),
+        //     });
+        // }
+
+        // let mut settings: Settings = r.unwrap();
+        // settings.filepath = String::from(filepath);
+        // return Ok(settings);
     }
 }

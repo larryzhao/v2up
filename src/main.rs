@@ -14,10 +14,10 @@ use commands::subscriptions;
 use commands::work;
 
 mod workdir;
+use workdir::servers::Servers;
 use workdir::settings::Settings;
 
 mod errors;
-use errors::kind::ErrorKind;
 mod utils;
 
 mod v2ray;
@@ -93,12 +93,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // workdir OK, we could load all the settings &
     // load settings
-    let result = Settings::load(workdir.filepath("settings.yaml").as_str());
+    let result = Settings::load(&workdir);
     if result.is_err() {
         println!("err on loading settings: {}", result.err().unwrap().message);
         std::process::exit(-1);
     }
     let settings = &mut result.unwrap();
+
+    // load servers
+    let servers = &mut Servers::from(workdir.path()).expect("err on loading servers");
 
     // create v2ray process
     let cmd = &mut Command::new(settings.v2ray.bin.as_str());
@@ -120,6 +123,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         settings: settings,
         config: config,
         process: process,
+        servers: servers,
     };
 
     match &cli.command {

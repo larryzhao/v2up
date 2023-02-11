@@ -3,6 +3,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum ErrorKind {
     FileNotFound,
+    LoadSettingsError,
     WorkdirUnavailable,
     WorkdirUninitialized,
     DirNotFound,

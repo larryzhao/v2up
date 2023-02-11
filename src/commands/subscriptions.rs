@@ -38,7 +38,6 @@ pub fn add(ctx: &mut Context, name: &str, url: &str) -> Result<(), Error> {
         url: String::from(url),
         added_at: chrono::DateTime::from(now),
         last_polled_at: chrono::DateTime::from(std::time::UNIX_EPOCH),
-        servers: vec![],
     })
 }
 
@@ -46,20 +45,31 @@ pub fn update(ctx: &mut Context) -> Result<(), Error> {
     let subs = &ctx.settings.subscriptions.clone();
 
     for sub in subs {
-        let result = fetch(sub.url.as_str());
-        if result.is_err() {
-            println!("request {} err: {}", sub.url, result.err().unwrap());
-            continue;
-        }
+        match fetch(sub.url.as_str()) {
+            Ok(servers) => {
+                let result = ctx
+                    .servers
+                    .update_by_group_name(sub.name.as_str(), &servers);
 
-        let servers = &result.unwrap();
-        ctx.settings
-            .update_subscription_servers(sub.name.as_str(), servers);
+                if result.is_err() {
+                    println!(
+                        "update servers by subscription {} err: {}",
+                        sub.name,
+                        result.err().unwrap()
+                    );
+                };
+                continue;
+            }
+            Err(err) => {
+                println!("request {} err: {}", sub.url, err);
+                continue;
+            }
+        }
     }
     Ok(())
 }
 
-fn fetch(url: &str) -> Result<Vec<Server>, Error> {
+fn fetch(url: &str) -> Result<Vec<ServerType>, Error> {
     let client = ClientBuilder::new()
         .no_proxy()
         .timeout(Duration::new(30, 0))

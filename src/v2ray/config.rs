@@ -1,6 +1,6 @@
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
-use crate::v2ray::server::Server;
+use crate::v2ray::server::ServerType;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -140,14 +140,14 @@ pub struct Settings3 {
 pub struct Transport {}
 
 impl Config {
-    pub fn use_server(&mut self, server: &Server) -> Result<(), Error> {
+    pub fn use_server(&mut self, server: &ServerType) -> Result<(), Error> {
         for outbound in &mut self.outbounds {
             if !outbound.tag.eq("proxy") {
                 continue;
             }
 
             match server {
-                Server::Vmess(_) => {
+                ServerType::Vmess(_) => {
                     outbound.protocol = String::from("vmess");
                 }
             }

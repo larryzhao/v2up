@@ -8,8 +8,9 @@ use crate::v2ray::config::User;
 use crate::v2ray::config::Vnext;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
-#[serde(crate = "rocket::serde")]
-pub enum Server {
+#[serde(tag = "type")]
+pub enum ServerType {
+    #[serde(rename = "vmess")]
     Vmess(VmessServer),
 }
 
@@ -41,10 +42,10 @@ struct VmessServerInfo {
     pub tls: String,
 }
 
-impl Server {
+impl ServerType {
     pub fn to_outbound(&self) -> Settings2 {
         match self {
-            Server::Vmess(server) => {
+            ServerType::Vmess(server) => {
                 return Settings2 {
                     vnext: vec![Vnext {
                         address: server.address.clone(),
@@ -65,7 +66,7 @@ impl Server {
     }
 }
 
-pub fn from_str(server_url: &str) -> Result<Server, Error> {
+pub fn from_str(server_url: &str) -> Result<ServerType, Error> {
     let parts: Vec<&str> = server_url.split("://").collect();
 
     return match parts[0] {
@@ -77,7 +78,7 @@ pub fn from_str(server_url: &str) -> Result<Server, Error> {
     };
 }
 
-fn parse_vmess_server(data: &str) -> Result<Server, Error> {
+fn parse_vmess_server(data: &str) -> Result<ServerType, Error> {
     let result = base64::decode(data);
     if result.is_err() {
         return Err(Error {
@@ -116,5 +117,6 @@ fn parse_vmess_server(data: &str) -> Result<Server, Error> {
         user_id: server_info.id,
         alter_id: server_info.aid.parse().unwrap(),
     };
-    Ok(Server::Vmess(vmess_server))
+
+    Ok(ServerType::Vmess(vmess_server))
 }
