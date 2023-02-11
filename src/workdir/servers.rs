@@ -19,7 +19,7 @@ pub struct Servers {
 }
 
 impl Servers {
-    pub fn from(workdir_path: &str) -> Result<Servers, Error> {
+    pub fn from_workdir(workdir_path: &str) -> Result<Servers, Error> {
         let servers_file = File::open(PathBuf::from(workdir_path).join("servers.yaml")).unwrap();
         match serde_yaml::from_reader(&servers_file) {
             Ok(servers) => Ok(servers),

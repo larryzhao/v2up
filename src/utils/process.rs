@@ -52,10 +52,6 @@ impl<'a> Process<'a> {
     }
 
     pub fn start(&mut self) -> Result<(), Error> {
-        // let mut command = Command::new(v2ray_binary);
-        // command.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
-        // "/Users/larry/.v2up/v2ray.pid"
-
         if let Ok(child) = self.command.spawn() {
             let pid = child.id();
             write_pidfile(&self.pidfile, pid.to_string().as_str());

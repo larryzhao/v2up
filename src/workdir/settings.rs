@@ -89,7 +89,7 @@ impl Settings {
         return self.v2ray.bin.as_str();
     }
 
-    pub fn load(workdir: &Dir) -> Result<Settings, Error> {
+    pub fn from_workdir(workdir: &Dir) -> Result<Settings, Error> {
         // read and deserialize settings.yaml
         let settings_file = File::open(workdir.filepath("settings.yaml").as_str()).unwrap();
         let settings: Settings = match serde_yaml::from_reader(&settings_file) {
@@ -103,30 +103,5 @@ impl Settings {
         };
 
         return Ok(settings);
-
-        // let r = fs::read_to_string(&settings_path);
-        // if r.is_err() {
-        //     return Err(Error {
-        //         kind: ErrorKind::ReadFileError,
-        //         message: format!(
-        //             "err on reading settings file {}, {}",
-        //             settings_path.to_str().unwrap(),
-        //             r.err().unwrap()
-        //         ),
-        //     });
-        // }
-
-        // let content = r.unwrap();
-        // let r = serde_yaml::from_str(&content);
-        // if r.is_err() {
-        //     return Err(Error {
-        //         kind: ErrorKind::ParseYAMLError,
-        //         message: format!("parse yaml err: {}", r.err().unwrap()),
-        //     });
-        // }
-
-        // let mut settings: Settings = r.unwrap();
-        // settings.filepath = String::from(filepath);
-        // return Ok(settings);
     }
 }

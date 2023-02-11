@@ -18,7 +18,6 @@ use workdir::servers::Servers;
 use workdir::settings::Settings;
 
 mod errors;
-use errors::kind::ErrorKind;
 
 mod context;
 mod server;
@@ -93,43 +92,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // workdir OK, we could load all the settings &
     // load settings
-    let result = Settings::load(&workdir);
-    if result.is_err() {
-        println!("err on loading settings: {}", result.err().unwrap().message);
-        std::process::exit(-1);
-    }
-    let settings = &mut result.unwrap();
+    let mut settings = Settings::from_workdir(&workdir).expect("err loading settings");
 
     // load servers
-    let servers = &mut Servers::from(workdir.path()).expect("err on loading servers");
+    let servers = &mut Servers::from_workdir(workdir.path()).expect("err loading servers");
 
     // create v2ray process
-    let v2ray_cmd = &mut Command::new(settings.v2ray.bin.as_str());
-    v2ray_cmd.args(["-config", "/Users/larry/.v2up/v2ray.json", "&"]);
-    let v2ray_process =
-        &mut utils::process::Process::new(v2ray_cmd, "/Users/larry/.v2up/v2ray.pid");
+    let mut v2ray_cmd = Command::new(settings.v2ray.bin.as_str());
+    v2ray_cmd.args(["-config", workdir.filepath("v2ray.json").as_str(), "&"]);
+    let mut v2ray_process =
+        utils::process::Process::new(&mut v2ray_cmd, workdir.filepath("v2ray.pid").as_str());
 
     // create v2ray process
     let worker_cmd = &mut Command::new("v2up");
     worker_cmd.args(["work"]);
     let worker_process =
-        &mut utils::process::Process::new(worker_cmd, "/Users/larry/.v2up/worker.pid");
+        &mut utils::process::Process::new(worker_cmd, workdir.filepath("worker.pid").as_str());
 
     // new v2ray config
-    let result = v2ray::config::Config::load("/Users/larry/.v2up/v2ray.json");
-    if result.is_err() {
-        println!("err on loading config: {}", result.err().unwrap().message);
-        std::process::exit(-1)
-    }
-
-    let config = &mut result.unwrap();
+    let mut v2ray_config = v2ray::config::Config::load(workdir.filepath("v2ray.json").as_str())
+        .expect("err loading v2ray config");
 
     // create context
     let mut ctx = context::Context {
         dir: &workdir,
-        settings: settings,
-        config: config,
-        v2ray_process: v2ray_process,
+        settings: &mut settings,
+        config: &mut v2ray_config,
+        v2ray_process: &mut v2ray_process,
         worker_process: worker_process,
         servers: servers,
     };
