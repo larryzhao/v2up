@@ -11,7 +11,7 @@ use std::thread;
 
 use sysinfo::{get_current_pid, SystemExt};
 
-pub fn exec(ctx: &mut Context) -> Result<(), Error> {
+pub fn exec(ctx: &Context) -> Result<(), Error> {
     // check if worker already runing
     if worker_already_running() {
         return Ok(());

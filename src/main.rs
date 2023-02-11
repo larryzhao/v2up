@@ -10,6 +10,7 @@ mod commands;
 use commands::servers;
 use commands::start;
 use commands::status;
+use commands::stop;
 use commands::subscriptions;
 use commands::work;
 
@@ -125,7 +126,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match &cli.command {
         Some(Commands::Servers {}) => {
-            let result = servers::exec(&mut ctx);
+            servers::exec(&mut ctx);
         }
         Some(Commands::Status {}) => {
             status::exec(&ctx);
@@ -137,22 +138,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             start::exec(&mut ctx);
         }
         Some(Commands::Stop {}) => {
-            // stop v2ray
-            ctx.v2ray_process.stop();
-            // stop v2up worker
-            ctx.worker_process.stop();
-
-            // remove pac
-            Command::new("networksetup")
-                .args(["-setautoproxystate", "Wi-Fi", "off"])
-                .output()
-                .expect("failed to disable pac");
+            stop::exec(&mut ctx);
         }
         Some(Commands::Init {}) => {
             // just do nothing, init is done before
         }
         Some(Commands::Subscriptions { command }) => {
-            subscriptions::exec(&mut ctx, command).unwrap()
+            subscriptions::exec(&mut ctx, command).unwrap();
         }
         None => {}
     }

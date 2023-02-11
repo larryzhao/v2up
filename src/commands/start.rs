@@ -1,30 +1,18 @@
 use crate::context::Context;
-use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
-use crate::utils::process::Process;
 
 use std::process::Command;
 
 pub fn exec(ctx: &mut Context) -> Result<(), Error> {
     // start v2ray core
-    let result = ctx.v2ray_process.start();
-    if result.is_err() {
-        let err = result.unwrap_err();
-        return Err(Error {
-            kind: ErrorKind::Base64DecodeError,
-            message: format!("start v2ray core err: {}", err),
-        });
-    }
+    ctx.v2ray_process
+        .start()
+        .expect("err starting v2ray core process");
 
     // start worker
-    let result = ctx.worker_process.start();
-    if result.is_err() {
-        let err = result.unwrap_err();
-        return Err(Error {
-            kind: ErrorKind::Base64DecodeError,
-            message: format!("start v2up worker err: {}", err),
-        });
-    }
+    ctx.worker_process
+        .start()
+        .expect("err starting v2up worker process");
 
     // set pac
     Command::new("networksetup")
