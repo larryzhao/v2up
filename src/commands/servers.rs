@@ -14,6 +14,11 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
         }
     }
 
+    if selections.len() == 0 {
+        println!("no servers");
+        return Ok(());
+    }
+
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Pick a server")
         .default(0)

@@ -52,7 +52,7 @@ impl Servers {
         // 1. remove all servers with group name
         let mut indices_to_remove: Vec<usize> = vec![];
         for (idx, s) in self.servers.iter().enumerate() {
-            if s.group.eq(group) {
+            if !s.group.eq(group) {
                 continue;
             }
             indices_to_remove.push(idx);
