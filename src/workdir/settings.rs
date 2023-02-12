@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::{fs, path};
+use std::fs;
 
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 use crate::v2ray::server::*;
 use std::fs::File;
-use std::path::PathBuf;
 use std::time::SystemTime;
 
 use super::dir::Dir;
@@ -25,7 +24,7 @@ pub struct Subscription {
     pub name: String,
     pub url: String,
     pub added_at: chrono::DateTime<chrono::Local>,
-    pub last_polled_at: chrono::DateTime<chrono::Local>,
+    pub last_updated_at: chrono::DateTime<chrono::Local>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -36,34 +35,12 @@ pub struct Settings {
 
     pub v2ray: V2Ray,
     pub log: Log,
-
-    #[serde(skip_serializing)]
-    #[serde(skip_deserializing)]
     pub subscriptions: Vec<Subscription>,
 }
 
 impl Settings {
     pub fn add_subscription(&mut self, subscription: Subscription) -> Result<(), Error> {
         self.subscriptions.push(subscription);
-        self.save()
-    }
-
-    pub fn update_subscription_servers(
-        &mut self,
-        name: &str,
-        servers: &Vec<ServerType>,
-    ) -> Result<(), Error> {
-        let mut sub_idx: usize = 0;
-
-        for i in 0..self.subscriptions.len() {
-            if self.subscriptions[i].name.as_str().eq(name) {
-                sub_idx = i;
-                break;
-            }
-        }
-
-        self.subscriptions[sub_idx].last_polled_at = chrono::DateTime::from(SystemTime::now());
-        // self.subscriptions[sub_idx].servers = (*servers).clone();
         self.save()
     }
 
@@ -91,9 +68,13 @@ impl Settings {
 
     pub fn from_workdir(workdir: &Dir) -> Result<Settings, Error> {
         // read and deserialize settings.yaml
-        let settings_file = File::open(workdir.filepath("settings.yaml").as_str()).unwrap();
-        let settings: Settings = match serde_yaml::from_reader(&settings_file) {
-            Ok(settings) => settings,
+        let filepath = workdir.filepath("settings.yaml");
+        let settings_file = File::open(filepath.as_str()).unwrap();
+        match serde_yaml::from_reader::<&std::fs::File, Settings>(&settings_file) {
+            Ok(mut settings) => {
+                settings.filepath = filepath;
+                return Ok(settings);
+            }
             Err(err) => {
                 return Err(Error {
                     kind: ErrorKind::LoadSettingsError,
@@ -101,7 +82,5 @@ impl Settings {
                 });
             }
         };
-
-        return Ok(settings);
     }
 }

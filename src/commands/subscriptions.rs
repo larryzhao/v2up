@@ -37,27 +37,27 @@ pub fn add(ctx: &mut Context, name: &str, url: &str) -> Result<(), Error> {
         name: String::from(name),
         url: String::from(url),
         added_at: chrono::DateTime::from(now),
-        last_polled_at: chrono::DateTime::from(std::time::UNIX_EPOCH),
+        last_updated_at: chrono::DateTime::from(std::time::UNIX_EPOCH),
     })
 }
 
 pub fn update(ctx: &mut Context) -> Result<(), Error> {
-    let subs = &ctx.settings.subscriptions.clone();
-
-    for sub in subs {
+    for sub in &mut ctx.settings.subscriptions {
         match fetch(sub.url.as_str()) {
             Ok(servers) => {
-                let result = ctx
+                match ctx
                     .servers
-                    .update_by_group_name(sub.name.as_str(), &servers);
-
-                if result.is_err() {
-                    println!(
-                        "update servers by subscription {} err: {}",
-                        sub.name,
-                        result.err().unwrap()
-                    );
-                };
+                    .update_by_group_name(sub.name.as_str(), &servers)
+                {
+                    Ok(changed) => {
+                        if changed {
+                            sub.last_updated_at = chrono::DateTime::from(SystemTime::now())
+                        }
+                    }
+                    Err(err) => {
+                        println!("update servers by subscription {} err: {}", sub.name, err)
+                    }
+                }
                 continue;
             }
             Err(err) => {
@@ -66,6 +66,9 @@ pub fn update(ctx: &mut Context) -> Result<(), Error> {
             }
         }
     }
+
+    ctx.servers.save().expect("fail to save servers.yaml");
+    ctx.settings.save().expect("fail to save settings.yaml");
     Ok(())
 }
 

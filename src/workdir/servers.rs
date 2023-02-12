@@ -2,9 +2,10 @@ use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 use crate::v2ray::server::ServerType;
 use serde::{Deserialize, Serialize};
+use std::fs::OpenOptions;
 
+use super::dir::Dir;
 use std::fs::File;
-use std::path::PathBuf;
 use std::slice::Iter;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -15,14 +16,22 @@ pub struct Server {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Servers {
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
+    pub filepath: String,
+
     servers: Vec<Server>,
 }
 
 impl Servers {
-    pub fn from_workdir(workdir_path: &str) -> Result<Servers, Error> {
-        let servers_file = File::open(PathBuf::from(workdir_path).join("servers.yaml")).unwrap();
-        match serde_yaml::from_reader(&servers_file) {
-            Ok(servers) => Ok(servers),
+    pub fn from_workdir(workdir: &Dir) -> Result<Servers, Error> {
+        let filepath = workdir.filepath("servers.yaml");
+        let servers_file = File::open(filepath.as_str()).unwrap();
+        match serde_yaml::from_reader::<&std::fs::File, Servers>(&servers_file) {
+            Ok(mut servers) => {
+                servers.filepath = filepath;
+                Ok(servers)
+            }
             Err(err) => Err(Error {
                 kind: ErrorKind::LoadSettingsError,
                 message: format!("load servers.yaml err: {}", err),
@@ -34,11 +43,16 @@ impl Servers {
         &mut self,
         group: &str,
         servers: &Vec<ServerType>,
-    ) -> Result<(), Error> {
+    ) -> Result<bool, Error> {
+        // if new servers is empty, then do nothing
+        if servers.is_empty() {
+            return Ok(false);
+        }
+
         // 1. remove all servers with group name
         let mut indices_to_remove: Vec<usize> = vec![];
         for (idx, s) in self.servers.iter().enumerate() {
-            if !s.group.eq(group) {
+            if s.group.eq(group) {
                 continue;
             }
             indices_to_remove.push(idx);
@@ -56,10 +70,17 @@ impl Servers {
             })
         }
 
-        Ok(())
+        Ok(true)
     }
 
     pub fn save(&self) -> Result<(), Error> {
+        // let servers_file = File::open(self.filepath.as_str()).expect("fail to open servers.yaml");
+        let servers_file = OpenOptions::new()
+            .write(true)
+            .open(self.filepath.as_str())
+            .expect("fail to open servers.yaml");
+        serde_yaml::to_writer(servers_file, self)
+            .expect("fail to encode and write to servers.yaml");
         Ok(())
     }
 

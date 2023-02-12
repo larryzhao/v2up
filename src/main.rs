@@ -34,6 +34,7 @@ enum Commands {
     Start {},
     Stop {},
     Init {},
+    Version {},
     Subscriptions {
         #[clap(subcommand)]
         command: subscriptions::Commands,
@@ -96,7 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut settings = Settings::from_workdir(&workdir).expect("err loading settings");
 
     // load servers
-    let servers = &mut Servers::from_workdir(workdir.path()).expect("err loading servers");
+    let servers = &mut Servers::from_workdir(&workdir).expect("err loading servers");
 
     // create v2ray process
     let mut v2ray_cmd = Command::new(settings.v2ray.bin.as_str());
@@ -142,6 +143,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(Commands::Init {}) => {
             // just do nothing, init is done before
+        }
+        Some(Commands::Version {}) => {
+            println!("v2up version {}", env!("CARGO_PKG_VERSION"))
         }
         Some(Commands::Subscriptions { command }) => {
             subscriptions::exec(&mut ctx, command).unwrap();
