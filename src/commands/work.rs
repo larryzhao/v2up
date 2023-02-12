@@ -17,13 +17,11 @@ pub fn exec(ctx: &Context) -> Result<(), Error> {
         return Ok(());
     }
 
-    // start worker for subscriptions
-
     // write pid file
     match get_current_pid() {
         Ok(pid) => {
             write_pidfile(
-                "/Users/larry/.v2up/worker.pid",
+                ctx.dir.filepath("worker.pid").as_str(),
                 i32::from(pid).to_string().as_str(),
             );
         }
