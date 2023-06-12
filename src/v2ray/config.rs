@@ -67,7 +67,7 @@ pub struct Mux {
 #[serde(rename_all = "camelCase")]
 pub struct StreamSettings {
     pub network: String,
-    pub tcp_settings: TcpSettings,
+    // pub tcp_settings: TcpSettings,
     pub security: String,
 }
 
@@ -107,8 +107,8 @@ pub struct Vnext {
 pub struct User {
     pub id: String,
     pub alter_id: i32,
-    pub level: i32,
-    pub security: String,
+    // pub level: i32,
+    // pub security: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
