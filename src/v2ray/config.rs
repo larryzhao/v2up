@@ -108,7 +108,7 @@ pub struct User {
     pub id: String,
     pub alter_id: i32,
     // pub level: i32,
-    // pub security: String,
+    pub security: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
