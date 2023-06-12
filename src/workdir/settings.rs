@@ -25,6 +25,7 @@ pub struct Subscription {
     pub url: String,
     pub added_at: chrono::DateTime<chrono::Local>,
     pub last_updated_at: chrono::DateTime<chrono::Local>,
+    pub skip_update: bool,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

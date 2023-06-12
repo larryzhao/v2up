@@ -93,14 +93,14 @@ impl ServerType {
                         users: vec![User {
                             id: server.user_id.clone(),
                             alter_id: server.alter_id,
-                            level: 0,
+                            // level: 0,
                             security: String::from("aes-128-gcm"),
                         }],
                     }],
                     domain_strategy: None,
                     response: None,
                     user_level: None,
-                }
+                };
             }
         }
     }
