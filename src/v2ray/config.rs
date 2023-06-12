@@ -150,6 +150,7 @@ impl Config {
                 ServerType::Vmess(_) => {
                     outbound.protocol = String::from("vmess");
                 }
+                ServerType::Trojan(_) => outbound.protocol = String::from("trojan"),
             }
             outbound.settings = server.to_outbound()
         }

@@ -74,7 +74,7 @@ pub fn update(ctx: &mut Context) -> Result<(), Error> {
 
 fn fetch(url: &str) -> Result<Vec<ServerType>, Error> {
     let client = ClientBuilder::new()
-        .no_proxy()
+        // .no_proxy()
         .timeout(Duration::new(30, 0))
         .build()
         .unwrap();

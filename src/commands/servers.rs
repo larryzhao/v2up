@@ -11,6 +11,7 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
     for server in ctx.servers.iter() {
         match &server.server {
             ServerType::Vmess(server) => selections.push(server.name.as_str()),
+            ServerType::Trojan(server) => selections.push(server.name.as_str()),
         }
     }
 
@@ -45,6 +46,9 @@ pub fn exec(ctx: &mut Context) -> Result<(), Error> {
 
     match &server.server {
         ServerType::Vmess(server) => {
+            println!("use server: {}, {}", server.name, server.address);
+        }
+        ServerType::Trojan(server) => {
             println!("use server: {}, {}", server.name, server.address);
         }
     }
