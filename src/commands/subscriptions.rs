@@ -38,11 +38,16 @@ pub fn add(ctx: &mut Context, name: &str, url: &str) -> Result<(), Error> {
         url: String::from(url),
         added_at: chrono::DateTime::from(now),
         last_updated_at: chrono::DateTime::from(std::time::UNIX_EPOCH),
+        skip_update: true,
     })
 }
 
 pub fn update(ctx: &mut Context) -> Result<(), Error> {
     for sub in &mut ctx.settings.subscriptions {
+        if sub.skip_update {
+            continue;
+        }
+
         match fetch(sub.url.as_str()) {
             Ok(servers) => {
                 match ctx
@@ -73,11 +78,11 @@ pub fn update(ctx: &mut Context) -> Result<(), Error> {
 }
 
 fn fetch(url: &str) -> Result<Vec<ServerType>, Error> {
-    let client = ClientBuilder::new()
-        .no_proxy()
+    let mut builder = ClientBuilder::new()
         .timeout(Duration::new(30, 0))
-        .build()
-        .unwrap();
+        .no_proxy();
+
+    let client = builder.build().unwrap();
 
     let result = client.get(url).send();
     if result.is_err() {
