@@ -1,6 +1,6 @@
-use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
 use crate::v2ray::server::ServerType;
+use crate::{errors::kind::ErrorKind, workdir::servers::Server};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -89,9 +89,9 @@ pub struct Header {
 pub struct Settings2 {
     #[serde(default)]
     pub vnext: Vec<Vnext>,
-    pub domain_strategy: Option<String>,
-    pub user_level: Option<i64>,
-    pub response: Option<Response>,
+    // pub domain_strategy: Option<String>,
+    // pub user_level: Option<i64>,
+    // pub response: Option<Response>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -149,9 +149,13 @@ impl Config {
             match server {
                 ServerType::Vmess(_) => {
                     outbound.protocol = String::from("vmess");
+                    outbound.settings = server.to_outbound();
+                    outbound.stream_settings = Some(StreamSettings {
+                        network: String::from("tcp"),
+                        security: String::from("none"),
+                    })
                 }
             }
-            outbound.settings = server.to_outbound()
         }
         self.save()
     }
