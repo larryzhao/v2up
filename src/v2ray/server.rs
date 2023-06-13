@@ -98,9 +98,9 @@ impl ServerType {
                             security: String::from("aes-128-gcm"),
                         }],
                     }],
-                    domain_strategy: None,
-                    response: None,
-                    user_level: None,
+                    // domain_strategy: None,
+                    // response: None,
+                    // user_level: None,
                 };
             }
         }
