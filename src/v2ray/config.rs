@@ -96,8 +96,25 @@ pub struct Settings2 {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SettingsTrojan {
+    #[serde(default)]
+    pub servers: Vec<TrojanServer>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrojanServer {
+    pub address: String,
+    pub port: String,
+    pub password: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[skip_serializing_none]
 pub struct Vnext {
     pub address: String,
+    #[serde(skip_serializing_if = "<[_]>::is_empty")]
     pub users: Vec<User>,
     pub port: i32,
 }

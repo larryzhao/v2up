@@ -9,6 +9,8 @@ use crate::v2ray::config::User;
 use crate::v2ray::config::Vnext;
 use crate::workdir::servers::Server;
 
+use super::config::SettingsTrojan;
+
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum ServerType {
@@ -30,7 +32,7 @@ pub struct VmessServer {
 }
 
 #[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+// #[serde(rename_all = "camelCase")]
 pub struct TrojanServer {
     pub name: String,
     pub address: String,
@@ -74,15 +76,14 @@ impl ServerType {
     pub fn to_outbound(&self) -> Settings2 {
         match self {
             ServerType::Trojan(server) => {
-                return Settings2 {
-                    vnext: vec![Vnext {
-                        address: server.address.clone(),
-                        port: server.port,
-                        users: vec![],
-                    }],
-                    domain_strategy: None,
-                    response: None,
-                    user_level: None,
+                return SettingsTrojan {
+                    servers: vec![
+                        TrojanServer {
+                            address: server.address.clone();
+                            port: server.port,
+                            password: server.password,
+                        }
+                    ],
                 }
             }
             ServerType::Vmess(server) => {
