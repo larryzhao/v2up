@@ -46,14 +46,14 @@ pub struct Settings {
     pub timeout: Option<i64>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Outbound {
     pub mux: Option<Mux>,
     pub protocol: String,
     pub stream_settings: Option<StreamSettings>,
     pub tag: String,
-    pub settings: Settings2,
+    pub settings: OutboundSettings,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -67,8 +67,16 @@ pub struct Mux {
 #[serde(rename_all = "camelCase")]
 pub struct StreamSettings {
     pub network: String,
-    // pub tcp_settings: TcpSettings,
     pub security: String,
+    pub tls_settings: Option<TLSSettings>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TLSSettings {
+    pub server_name: String,
+    pub allow_insecure_ciphers: bool,
+    pub allow_insecure: bool,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -84,34 +92,48 @@ pub struct Header {
     pub type_field: String,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct OutboundSettings {
+    pub vnext: Option<Vec<Vnext>>,
+    pub servers: Option<Vec<ServerTrojan>>,
+}
+
+impl OutboundSettings {
+    pub fn address(&self) -> String {
+        match &self.vnext {
+            Some(servers) => return servers[0].address.clone(),
+            None => match &self.servers {
+                Some(servers) => return servers[0].address.clone(),
+                None => return String::from("none"),
+            },
+        }
+    }
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Settings2 {
+pub struct SettingsVmess {
     #[serde(default)]
     pub vnext: Vec<Vnext>,
-    // pub domain_strategy: Option<String>,
-    // pub user_level: Option<i64>,
-    // pub response: Option<Response>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsTrojan {
     #[serde(default)]
-    pub servers: Vec<TrojanServer>,
+    pub servers: Vec<ServerTrojan>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TrojanServer {
+pub struct ServerTrojan {
     pub address: String,
-    pub port: String,
+    pub port: i32,
     pub password: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[skip_serializing_none]
 pub struct Vnext {
     pub address: String,
     #[serde(skip_serializing_if = "<[_]>::is_empty")]
@@ -163,17 +185,12 @@ impl Config {
                 continue;
             }
 
-            match server {
-                ServerType::Vmess(_) => {
-                    outbound.protocol = String::from("vmess");
-                    outbound.settings = server.to_outbound();
-                    outbound.stream_settings = Some(StreamSettings {
-                        network: String::from("tcp"),
-                        security: String::from("none"),
-                    })
-                }
-                ServerType::Trojan(_) => outbound.protocol = String::from("trojan"),
-            }
+            let o = server.to_outbound();
+            outbound.mux = o.mux;
+            outbound.settings = o.settings;
+            outbound.stream_settings = o.stream_settings;
+            outbound.protocol = o.protocol;
+            outbound.tag = o.tag;
         }
         self.save()
     }

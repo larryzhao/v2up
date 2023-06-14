@@ -1,15 +1,20 @@
 use regex::Regex;
+use rocket::data::N;
 use serde::{Deserialize, Serialize};
 use std::str;
 
 use crate::errors::kind::ErrorKind;
 use crate::errors::Error;
-use crate::v2ray::config::Settings2;
+use crate::v2ray::config::Outbound;
+use crate::v2ray::config::OutboundSettings;
+use crate::v2ray::config::SettingsTrojan;
+use crate::v2ray::config::SettingsVmess;
 use crate::v2ray::config::User;
 use crate::v2ray::config::Vnext;
-use crate::workdir::servers::Server;
 
-use super::config::SettingsTrojan;
+use super::config::ServerTrojan;
+use super::config::StreamSettings;
+use super::config::TLSSettings;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
@@ -73,34 +78,55 @@ struct VmessServerInfo {
 }
 
 impl ServerType {
-    pub fn to_outbound(&self) -> Settings2 {
+    pub fn to_outbound(&self) -> Outbound {
         match self {
             ServerType::Trojan(server) => {
-                return SettingsTrojan {
-                    servers: vec![
-                        TrojanServer {
-                            address: server.address.clone();
+                return Outbound {
+                    mux: None,
+                    protocol: String::from("trojan"),
+                    settings: OutboundSettings {
+                        servers: Some(vec![ServerTrojan {
+                            address: server.address.clone(),
                             port: server.port,
-                            password: server.password,
-                        }
-                    ],
-                }
+                            password: server.password.clone(),
+                        }]),
+                        vnext: None,
+                    },
+                    stream_settings: Some(StreamSettings {
+                        network: String::from("tcp"),
+                        security: String::from("tls"),
+                        tls_settings: Some(TLSSettings {
+                            server_name: server.sni.clone(),
+                            allow_insecure: server.allow_insecure,
+                            allow_insecure_ciphers: server.allow_insecure,
+                        }),
+                    }),
+                    tag: String::from("proxy"),
+                };
             }
             ServerType::Vmess(server) => {
-                return Settings2 {
-                    vnext: vec![Vnext {
-                        address: server.address.clone(),
-                        port: server.port,
-                        users: vec![User {
-                            id: server.user_id.clone(),
-                            alter_id: server.alter_id,
-                            // level: 0,
-                            security: String::from("aes-128-gcm"),
-                        }],
-                    }],
-                    // domain_strategy: None,
-                    // response: None,
-                    // user_level: None,
+                return Outbound {
+                    mux: None,
+                    protocol: String::from("vmess"),
+                    tag: String::from("proxy"),
+                    settings: OutboundSettings {
+                        vnext: Some(vec![Vnext {
+                            address: server.address.clone(),
+                            port: server.port,
+                            users: vec![User {
+                                id: server.user_id.clone(),
+                                alter_id: server.alter_id,
+                                // level: 0,
+                                security: String::from("aes-128-gcm"),
+                            }],
+                        }]),
+                        servers: None,
+                    },
+                    stream_settings: Some(StreamSettings {
+                        network: String::from("tcp"),
+                        security: String::from("none"),
+                        tls_settings: None,
+                    }),
                 };
             }
         }
@@ -121,7 +147,7 @@ pub fn from_str(server_url: &str) -> Result<ServerType, Error> {
 }
 
 fn parse_trojan_server(data: &str) -> Result<ServerType, Error> {
-    let mut server = TrojanServer::new();
+    let server = TrojanServer::new();
 
     // data: trojan://31b98cae-da2d-4456-b351-f91838313f0a@jp1.lxjc.app:443?allowInsecure=0&peer=16-163-218-240.nhost.00cdn.com&sni=16-163-218-240.nhost.00cdn.com#%E5%89%A9%E4%BD%99%E6%B5%81%E9%87%8F%EF%BC%9A99.89%20GB
     let re = Regex::new("trojan://(.*)@(.*):(.*)?(.*)#(.*)").unwrap();

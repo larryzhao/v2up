@@ -14,10 +14,7 @@ pub fn exec(ctx: &Context) -> Result<(), Error> {
         }
     }
     println!("PID: {}", ctx.v2ray_process.pid());
-    println!(
-        "Server: {}",
-        ctx.config.outbounds[0].settings.vnext[0].address
-    );
+    println!("Server: {}", ctx.config.outbounds[0].settings.address());
 
     Ok(())
 }
