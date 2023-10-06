@@ -69,6 +69,7 @@ pub struct StreamSettings {
     pub network: String,
     pub security: String,
     pub tls_settings: Option<TLSSettings>,
+    pub ws_settings: Option<WSSettings>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -77,6 +78,19 @@ pub struct TLSSettings {
     pub server_name: String,
     pub allow_insecure_ciphers: bool,
     pub allow_insecure: bool,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WSSettings {
+    pub path: String,
+    pub headers: WSSettingsHeaders,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WSSettingsHeaders {
+    pub host: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -15,6 +15,8 @@ use crate::v2ray::config::Vnext;
 use super::config::ServerTrojan;
 use super::config::StreamSettings;
 use super::config::TLSSettings;
+use super::config::WSSettings;
+use super::config::WSSettingsHeaders;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
@@ -37,7 +39,6 @@ pub struct VmessServer {
 }
 
 #[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-// #[serde(rename_all = "camelCase")]
 pub struct TrojanServer {
     pub name: String,
     pub address: String,
@@ -45,6 +46,10 @@ pub struct TrojanServer {
     pub password: String,
     pub sni: String,
     pub allow_insecure: bool,
+    #[serde(default)]
+    pub network: String,
+    #[serde(default)]
+    pub path: String,
 }
 
 impl TrojanServer {
@@ -56,6 +61,8 @@ impl TrojanServer {
             password: String::from(""),
             sni: String::from(""),
             allow_insecure: false,
+            network: String::from(""),
+            path: String::from(""),
         };
     }
 }
@@ -93,13 +100,25 @@ impl ServerType {
                         vnext: None,
                     },
                     stream_settings: Some(StreamSettings {
-                        network: String::from("tcp"),
+                        network: match server.network.as_str() {
+                            "ws" => String::from("ws"),
+                            _ => String::from("tcp"),
+                        },
                         security: String::from("tls"),
                         tls_settings: Some(TLSSettings {
                             server_name: server.sni.clone(),
                             allow_insecure: server.allow_insecure,
                             allow_insecure_ciphers: server.allow_insecure,
                         }),
+                        ws_settings: match server.network.as_str() {
+                            "ws" => Some(WSSettings {
+                                path: server.path.clone(),
+                                headers: WSSettingsHeaders {
+                                    host: server.sni.clone(),
+                                },
+                            }),
+                            _ => None,
+                        },
                     }),
                     tag: String::from("proxy"),
                 };
@@ -126,6 +145,7 @@ impl ServerType {
                         network: String::from("tcp"),
                         security: String::from("none"),
                         tls_settings: None,
+                        ws_settings: None,
                     }),
                 };
             }
